@@ -1,0 +1,433 @@
+openapi: 3.0.0
+info:
+  title: E-commerce REST API
+  version: 1.0.0
+  description: RESTful API for e-commerce applications
+servers:
+  - url: http://localhost:4000
+
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - email
+        - password
+        - first_name
+        - last_name
+      properties:
+        id:
+          type: integer
+          description: The auto-generated id of the user
+        email:
+          type: string
+          description: The email of the user
+        password:
+          type: string
+          description: The password of the user
+        first_name:
+          type: string
+          description: The name of the user
+        last_name:
+          type: string
+          description: The name of the user
+      example:
+        id: 1
+        email: "john.doe@example.com"
+        password: "password123"
+        first_name: "John"
+        last_name: "Doe"
+
+    Product:
+      type: object
+      required:
+        - name
+        - category
+        - price
+      properties:
+        id:
+          type: integer
+          description: The auto-generated id of the product
+        name:
+          type: string
+          description: The name of the product
+        category:
+          type: string
+          description: The product category
+        price:
+          type: number
+          description: The product price
+        description:
+          type: string
+          description: The product description
+        stock:
+          type: integer
+          description: The product stock quantity
+      example:
+        id: 1
+        name: "Sample Product"
+        category: "Sample Category"
+        price: 29.99
+        description: "This is a sample product"
+        stock: 100
+
+    Order:
+      type: object
+      required:
+        - user_id
+        - status
+      properties:
+        id:
+          type: integer
+          description: The auto-generated id of the order
+        user_id:
+          type: integer
+          description: The id of the user who placed the order
+        status:
+          type: string
+          description: The status of the order
+        created:
+          type: string
+          description: The date when the order was created
+        modified:
+          type: string
+          description: The date when the order was last updated
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+      example:
+        id: 1
+        user_id: 1
+        status: "pending"
+        created: "2024/05/22"
+        modified: "2024/05/22"
+        items:
+          - product_id: 1
+            qty: 2
+
+    OrderItem:
+      type: object
+      required:
+        - order_id
+        - product_id
+        - qty
+      properties:
+        id:
+          type: integer
+          description: Auto-generated id of the item
+        order_id:
+          type: integer
+          description: The id of the order
+        product_id:
+          type: integer
+          description: The id of the product
+        qty:
+          type: integer
+          description: The quantity of the product
+      example:
+        id: 1
+        order_id: 3
+        product_id: 9
+        qty: 2
+
+    ShoppingCart:
+      type: object
+      required:
+        - user_id
+        - items
+      properties:
+        id:
+          type: integer
+          description: Auto-generated id of the cart
+        user_id:
+          type: integer
+          description: The id of the user who owns the cart
+        created:
+          type: string
+          description: The date when the cart was created
+        modified:
+          type: string
+          description: The date when the cart was last updated
+        total: 
+          type: number
+          description: The sum of the prices for all items in the cart
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+      example:
+        id: 1
+        user_id: 1
+        created: "2024/05/22"
+        modified: "2024/05/22"
+        total: 12.34
+        items:
+          - product_id: 2
+            qty: 2
+            name: "pencil"
+            price: 0.99
+            description: "An excellent tool to write"
+            category: "stationery"
+            subtotal: 1.98
+
+    CartItem:
+      type: object
+      required:
+        - cart_id
+        - product_id
+        - qty
+      properties:
+        id:
+          type: integer
+          description: Auto-generated id of the item
+        cart_id:
+          type: integer
+          description: The id of the product
+        product_id:
+          type: integer
+          description: The id of the product
+        qty:
+          type: integer
+          description: The quantity of the product
+        name:
+          type: string
+          description: The product name
+        price:
+          type: number
+          description: The product price per unit
+        description:
+          type: integer
+          description: The description of the product
+        category:
+          type: string
+          description: The product category
+        subtotal:
+          type: number
+          description: The price of the product, multiplied by its quantity on cart
+      example:
+        id: 1
+        cart_id: 1
+        product_id: 2
+        qty: 2
+        name: "pencil"
+        price: 0.99
+        description: "An excellent tool to write"
+        category: "stationery"
+        subtotal: 1.98
+
+tags:
+  - name: Users
+    description: The Users managing API
+  - name: Authentication
+    description: The User Aauthentication API
+  - name: Products
+    description: The Products managing API
+  - name: Orders
+    description: The Orders managing API
+  - name: ShoppingCart
+    description: The Shopping Cart managing API
+
+paths:
+  /api/user/register:
+    post:
+      summary: Registers a new user
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        201:
+          description: The user was successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        400:
+          description: Bad request
+
+  /api/user/login:
+    post:
+      summary: Logs in a user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        200:
+          description: The user was successfully logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+
+  /api/user/logout:
+    post:
+      summary: Logs out a user
+      tags: [Authentication]
+      responses:
+        200:
+          description: The user was successfully logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        400:
+          description: Bad request
+
+  /api/product:
+    get:
+      summary: Returns the list of all the products
+      tags: [Products]
+      responses:
+        200:
+          description: The list of the products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+    post:
+      summary: Creates a new product
+      tags: [Products]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      responses:
+        201:
+          description: The product was successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        400:
+          description: Bad request
+
+  /api/order:
+    post:
+      summary: Creates a new order
+      tags: [Orders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/OrderItem'
+      responses:
+        201:
+          description: The order was successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        400:
+          description: Bad request
+
+  /api/order/{orderId}:
+    get:
+      summary: Get the details of a specific order
+      tags: [Orders]
+      parameters:
+        - in: path
+          name: orderId
+          schema:
+            type: integer
+          required: true
+          description: The id of the order
+      responses:
+        200:
+          description: The order details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        404:
+          description: The order was not found
+
+  /api/cart/add:
+    post:
+      summary: Add a product to the shopping cart
+      tags: [ShoppingCart]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                product_id:
+                  type: integer
+                qty:
+                  type: integer
+      responses:
+        201:
+          description: The product was successfully added to the cart
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        400:
+          description: Bad request
+
+  /api/cart/{user_id}:
+    get:
+      summary: Get the details of the shopping cart for a specific user
+      tags: [ShoppingCart]
+      parameters:
+        - in: path
+          name: user_id
+          schema:
+            type: integer
+          required: true
+          description: The id of the user
+      responses:
+        200:
+          description: The shopping cart details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cart:
+                    type: object
+                    $ref: '#/components/schemas/ShoppingCart'
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CartItem'
+        404:
+          description: The cart was not found
