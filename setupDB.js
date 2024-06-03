@@ -15,7 +15,8 @@ const createTables = async () => {
       email           VARCHAR(50)     NOT NULL,      
       password        TEXT            NOT NULL,
       first_name      VARCHAR(50)     NOT NULL,
-      last_name       VARCHAR(50)     NOT NULL
+      last_name       VARCHAR(50)     NOT NULL,
+      is_admin        BOOL            DEFAULT FALSE
     );
   `
 
@@ -23,10 +24,10 @@ const createTables = async () => {
     CREATE TABLE IF NOT EXISTS products (
       id              INT             SERIAL PRIMARY KEY,
       name            VARCHAR(50)     NOT NULL,
-      category        VARCHAR(50)     NOT NULL,
-      price           REAL            NOT NULL,
+      category        VARCHAR(50),
+      price           REAL,
       description     VARCHAR(250),
-      stock           INT             NOT NULL
+      stock           INT
     );
   `
 
@@ -34,20 +35,20 @@ const createTables = async () => {
     CREATE TABLE IF NOT EXISTS orders (
       id              INT             SERIAL PRIMARY KEY,
       user_id         INT             NOT NULL,
-      status          VARCHAR(20)     NOT NULL,
-      created         DATE,
-      modified        DATE,
+      status          VARCHAR(15)     DEFAULT 'pending',
+      created         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+      modified        TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
   `
 
   const createOrderItemsTable = `
-    CREATE TABLE IF NOT EXISTS orderItems (
+    CREATE TABLE IF NOT EXISTS order_items (
       id              INT             SERIAL PRIMARY KEY,
-      order_id        INT             NOT NULL,
-      product_id      INT             NOT NULL,
-      qty             INT             NOT NULL,
-      FOREIGN KEY (order_id) REFERENCES orders(id),
+      order_id        INT,
+      product_id      INT,
+      qty             INT,
+      FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
       FOREIGN KEY (product_id) REFERENCES products(id)
     );
   `
@@ -55,22 +56,46 @@ const createTables = async () => {
   const createCartsTable = `
     CREATE TABLE IF NOT EXISTS carts (
       id              INT             SERIAL PRIMARY KEY,
-      user_id         INT             NOT NULL,
-      created         DATE,
-      modified        DATE,
+      user_id         INT,
+      created         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+      modified        TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
   `
 
   const createCartItemsTable = `
-    CREATE TABLE IF NOT EXISTS cartItems (
+    CREATE TABLE IF NOT EXISTS cart_items (
       id              INT             SERIAL PRIMARY KEY,
-      cart_id         INT             NOT NULL,
-      product_id      INT             NOT NULL,
-      qty             INT             NOT NULL,
-      FOREIGN KEY (cart_id) REFERENCES carts(id),
+      cart_id         INT,
+      product_id      INT,
+      qty             INT,
+      FOREIGN KEY (cart_id) REFERENCES carts(id) ON DELETE CASCADE,
       FOREIGN KEY (product_id) REFERENCES products(id)
     );
+  `
+
+  const createUpdateModifiedProcedure = `
+    CREATE OR REPLACE FUNCTION update_modified()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      NEW.modified = NOW();
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+  `
+
+  const createUpdateCartTrigger = `
+    CREATE TRIGGER set_modified_cart
+    BEFORE UPDATE ON carts
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_modified();
+  `
+
+  const createUpdateOrderTrigger = `
+    CREATE TRIGGER set_modified_cart
+    BEFORE UPDATE ON carts
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_modified();
   `
 
   try {
@@ -91,6 +116,9 @@ const createTables = async () => {
     await db.query(createOrderItemsTable);
     await db.query(createCartsTable);
     await db.query(createCartItemsTable);
+    await db.query(createUpdateModifiedProcedure);
+    await db.query(createUpdateCartTrigger);
+    await db.query(createUpdateOrderTrigger);
 
     await db.end();
 

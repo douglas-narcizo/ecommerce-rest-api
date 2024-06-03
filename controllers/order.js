@@ -1,4 +1,5 @@
 const pool = require('../db');
+const { getCart } = require('./cart');
 
 // ----- HELPER: retrieve product info from table "products"
 const orderProdutcsInfo = async (orderId) => {
@@ -18,113 +19,194 @@ const orderProdutcsInfo = async (orderId) => {
     }
 }
 
-const addToOrder = async (req, res) => {
-    const { user_id, product_id, qty } = req.body;
+// ----- HELPER: retrieve order details
+const getOrder = async (orderId) => {
     try {
-        // Try to find user's order
         const orderResult = await pool.query(
-            'SELECT * FROM orders WHERE user_id = $1',
-            [user_id]
+            'SELECT * FROM orders WHERE id = $1',
+            [orderId]
         );
-
-        // If a order doesn't exist, create one
-        let order;
         if (orderResult.rows.length === 0) {
-            const neworderResult = await pool.query(
-                'INSERT INTO orders (user_id) VALUES ($1) RETURNING *',
-                [user_id]
-            );
-            order = neworderResult.rows[0];
-        } else {
-            order = orderResult.rows[0];
+            return null;
         }
+        const order = orderResult.rows[0];
+        const orderProducts = await orderProdutcsInfo(order.id);
+        order.total = orderProducts.map(item => item.subtotal).reduce((a, b) => a + b, 0);
+        order.items = orderProducts;
+        return order;
+    } catch (err) {
+        return err;
+    }
+}
 
-        // Look if current product is already in the order
-        const orderItemResult = await pool.query(
-            'SELECT * FROM order_items WHERE order_id = $1 AND product_id = $2',
-            [order.id, product_id]
+// ----- HELPER: update products stock upon order success
+const updateProductsStock = async (orderId) => {
+    try {
+        const orderItemsInfo = await pool.query(`
+            SELECT id, product_id, qty
+            FROM order_items
+            WHERE order_id = $1;`,
+            [orderId]
         );
-
-        // If product is found, update it, and if not, add to order
-        let orderItems;
-        if (orderItemResult.rows.length === 0) {
-            orderItems = await pool.query(`
-                INSERT INTO order_items (order_id, product_id, qty)
-                VALUES ($1, $2, $3)
-                RETURNING *`,
-                [order.id, product_id, qty]
+        orderItemsInfo.rows.forEach(async item => {
+            await pool.query(`
+                UPDATE products
+                SET stock = stock - $2
+                WHERE id = $1`,
+                [item.product_id, item.qty]
             );
-        } else {
-            orderItems = await pool.query(`
-                UPDATE order_items SET qty = qty + $3
-                WHERE order_id = $1 AND product_id = $2
-                RETURNING *`, //  WHERE order_id = $1
-                [order.id, product_id, qty]
-            );
-        }
-        orderItems = await orderProdutcsInfo(order.id);
-        res.status(201).json({
-            order: order,
-            items: orderItems,
         });
+        return orderItemsInfo.rows;
+    } catch (err) {
+        return err;
+    }
+}
 
+const create = async (req, res, next) => {
+    const { cartId } = req.params;
+    const userId = req.user;
+
+    const cart = await getCart(cartId);
+    if (!cart) {
+        return res.status(400).send({ message: 'The order is empty!' });
+    }
+    if (!userId) {
+        return res.status(400).send({ message: 'Please login first!' });
+    }
+    try {
+        // Create order
+        const orderResult = await pool.query(
+            'INSERT INTO orders (user_id, total) VALUES ($1, $2) RETURNING *',
+            [userId, cart.total.toFixed(2)]
+        );
+        if (orderResult.rows.length === 0) {
+            return res.status(500).json({ message: err.message });
+        }
+        const order = orderResult.rows[0];
+        // Populate order_items with cart_items
+        const newOrderArray = cart.items.map(
+                item => `(${order.id},${item.product_id},${item.qty})`
+            ).join(",");
+        await pool.query(`
+            INSERT INTO order_items (order_id, product_id, qty)
+            VALUES ${newOrderArray}
+            RETURNING *`
+        );
+        // Get items details and attach them to order
+        const itemsDetails = await orderProdutcsInfo(order.id);
+        order.items = itemsDetails;
+
+        // ----- PAYMENT TIME RIGHT HERE !!! -----
+
+        console.log('Payment time!!!');
+        // ------------ On payment OK ------------
+
+        // ------ UPDATE PRODUCTS STOCK HERE -----
+        console.log('Updating products stock!!');
+        await updateProductsStock(order.id);
+
+        return res.status(201).json(order);
     } catch (err) {
         res.status(400).json({ message: err.message });
     }
-};
+}
 
 const getByUserId = async (req, res) => {
-    const { user_id } = req.params;
+    const userId = req.user;
+    if (!userId) {
+        return res.status(400).send({ message: 'Please login first!' });
+    }
     try {
         const orderResult = await pool.query(
             'SELECT * FROM orders WHERE user_id = $1',
-            [user_id]
+            [userId]
         );
         if (orderResult.rows.length === 0) {
             return res.status(404).json({ message: 'Order not found' });
         }
-        const order = orderResult.rows[0];
-        const orderItemsResult = await pool.query(
-            'SELECT * FROM order_items WHERE order_id = $1',
-            [order.id]
-        );
-        if (orderItemsResult.rows.length === 0) {
-            order.total = 0;
-            return res.json({
-                order,
-                items: [],
-            });
+        const order = await getOrder(orderResult.rows[0].id);
+        if (order) {
+            return res.status(200).json(order);
+        } else {
+            res.status(404).json({ message: 'Order not found' });
         }
-        const orderProducts = await orderProdutcsInfo(order.id);
-        order.total = orderProducts.map(item => item.subtotal).reduce((a, b) => a + b, 0);
-        res.json({
-            order,
-            items: orderProducts,
-        });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
 
 const getById = async (req, res) => {
+/*  const userId = req.user;
+    if (!userId) {
+        return res.status(400).send({ message: 'Please login first!' });
+    } */
+    const { orderId } = req.params;
+    try {
+        const order = await getOrder(orderId);
+        if (order) {
+            res.status(200).json(order);
+        } else {
+            res.status(404).json({ message: 'Order not found' });
+        }
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
 }
+
+const updateById = async (req, res) => {
+    const { orderId } = req.params;
+    const { total, status } = req.body;
+    const fields = [];
+    const values = [];
+  
+    if (total) {
+      fields.push('total');
+      values.push(total);
+    }
+    if (status) {
+      fields.push('status');
+      values.push(status);
+    }
+  
+    if (fields.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+    const setClause = fields.map((field, index) => `${field} = $${index + 1}`).join(', ');
+    try {
+      const result = await pool.query(`
+        UPDATE orders
+        SET ${setClause}
+        WHERE id = $${fields.length + 1}
+        RETURNING *`,
+        [...values, orderId]
+      );
+      res.status(200).json(result.rows[0]);
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
 
 const deleteById = async (req, res) => {
-}
+/*  const userId = req.user;
+    if (!userId) {
+        return res.status(400).send({ message: 'Please login first!' });
+    } */
+    const { orderId } = req.params;
+    try {
+      await pool.query(
+        'DELETE FROM orders WHERE id = $1',
+        [orderId]
+      );
+      res.status(204).send();
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
 
 module.exports = {
-    addToOrder,
+    create,
     getByUserId,
     getById,
+    updateById,
     deleteById
 }
-
-/*
-SAMPLE DATA FOR TESTING PURPOSES:
-
-user_id, product_id, qty
-{"user_id":1,"product_id":2,"qty":3}
-
-user_id
-
-*/

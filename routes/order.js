@@ -1,25 +1,19 @@
 const orderRouter = require('express').Router();
+const orderCtl = require('../controllers/order');
 
 orderRouter.route('/')
-.get((req, res, next) => {
-    res.send('At your orders!')
-})
-.post();
+.get( orderCtl.getByUserId );
+/*  (req, res, next) => {
+        if (req.user) {
+            res.send('At your orders!');
+        } else {
+            res.status(403).json({ msg: "Please login to view your orders" });
+        }
+    } */
+
+orderRouter.route('/:orderId')
+.get( orderCtl.getById )
+.put( orderCtl.updateById )
+.delete( orderCtl.deleteById );
 
 module.exports = orderRouter;
-
-/*
-const productRouter = require('express').Router();
-const productCtl = require('../controllers/product');
-
-productRouter.route('/')
-.get( productCtl.getAll )
-.post( productCtl.create );
-
-productRouter.route('/:productId')
-.get( productCtl.getOneById )
-.put( productCtl.updateById )
-.delete( productCtl.deleteById );
-
-module.exports = productRouter;
-*/

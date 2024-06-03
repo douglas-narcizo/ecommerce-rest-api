@@ -10,7 +10,7 @@ productRouter.post('/', productController.createProduct);
 */
 
 productRouter.route('/')
-.get( productCtl.getAll )
+.get( productCtl.getList )
 .post( productCtl.create );
 
 productRouter.route('/:productId')
