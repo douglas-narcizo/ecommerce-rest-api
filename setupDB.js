@@ -11,7 +11,7 @@ const createTables = async () => {
 
   const createUsersTable = `
     CREATE TABLE IF NOT EXISTS users (
-      id              INT             SERIAL PRIMARY KEY,
+      id              SERIAL          PRIMARY KEY,
       email           VARCHAR(50)     NOT NULL,      
       password        TEXT            NOT NULL,
       first_name      VARCHAR(50)     NOT NULL,
@@ -22,7 +22,7 @@ const createTables = async () => {
 
   const createProductsTable = `
     CREATE TABLE IF NOT EXISTS products (
-      id              INT             SERIAL PRIMARY KEY,
+      id              SERIAL          PRIMARY KEY,
       name            VARCHAR(50)     NOT NULL,
       category        VARCHAR(50),
       price           REAL,
@@ -33,18 +33,19 @@ const createTables = async () => {
 
   const createOrdersTable = `
     CREATE TABLE IF NOT EXISTS orders (
-      id              INT             SERIAL PRIMARY KEY,
+      id              SERIAL          PRIMARY KEY,
       user_id         INT             NOT NULL,
+      total           REAL,
       status          VARCHAR(15)     DEFAULT 'pending',
       created         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
-      modified        TIMESTAMP,
+      modified        TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
   `
 
   const createOrderItemsTable = `
     CREATE TABLE IF NOT EXISTS order_items (
-      id              INT             SERIAL PRIMARY KEY,
+      id              SERIAL          PRIMARY KEY,
       order_id        INT,
       product_id      INT,
       qty             INT,
@@ -55,17 +56,17 @@ const createTables = async () => {
 
   const createCartsTable = `
     CREATE TABLE IF NOT EXISTS carts (
-      id              INT             SERIAL PRIMARY KEY,
+      id              SERIAL          PRIMARY KEY,
       user_id         INT,
       created         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
-      modified        TIMESTAMP,
+      modified        TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
   `
 
   const createCartItemsTable = `
     CREATE TABLE IF NOT EXISTS cart_items (
-      id              INT             SERIAL PRIMARY KEY,
+      id              SERIAL          PRIMARY KEY,
       cart_id         INT,
       product_id      INT,
       qty             INT,
@@ -92,8 +93,8 @@ const createTables = async () => {
   `
 
   const createUpdateOrderTrigger = `
-    CREATE TRIGGER set_modified_cart
-    BEFORE UPDATE ON carts
+    CREATE TRIGGER set_modified_order
+    BEFORE UPDATE ON orders
     FOR EACH ROW
     EXECUTE PROCEDURE update_modified();
   `

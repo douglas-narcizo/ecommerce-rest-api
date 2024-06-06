@@ -1,28 +1,16 @@
 const pool = require('../db');
-// const passport = require('passport');
 const bcrypt = require('bcryptjs');
 
-/*=========================================
-/   REGISTER USER  -  [POST]
-/   auth. required: no
-/   endpoint: /users/register
-/   req.body: {
-/       "email":"johndoe@example.com",
-/       "password":"MyGoodPwd",
-/       "first_name":"John",
-/       "last_name":"Doe"
-/     }
-/ ========================================= */
 const register = async (req, res) => {
-  const { email, password, first_name, last_name } = req.body;
+  const { email, password, firstName, lastName } = req.body;
   try {
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(password, salt);
     const newUser = await pool.query(`
       INSERT INTO users (email, password, first_name, last_name)
       VALUES ($1, $2, $3, $4)
-      RETURNING id, email, first_name, last_name`,
-      [email, hash, first_name, last_name]
+      RETURNING id, email, first_name AS "firstName", last_name AS "lastName"`,
+      [email, hash, firstName, lastName]
     );
     res.status(201).json(newUser.rows[0]);
   } catch (err) {
@@ -30,16 +18,10 @@ const register = async (req, res) => {
   }
 }
 
-/*=========================================
-/   GET ALL USERS  -  [GET]
-/   auth. required: yes
-/   endpoint: /users
-/   req.body: no
-/ ========================================= */
 const getAll = async (req, res) => {
   if (req.user) {
     try {
-      const result = await pool.query('SELECT id, email, first_name, last_name FROM users');
+      const result = await pool.query('SELECT id, email, first_name AS "firstName", last_name AS "lastName" FROM users');
       res.json(result.rows);
     } catch (err) {
       res.status(500).json({ message: err.message });
@@ -49,19 +31,12 @@ const getAll = async (req, res) => {
   }
 }
 
-
-/*=========================================
-/   GET USER  -  [GET]
-/   auth. required: yes
-/   endpoint: /users/{userId}
-/   req.body: no
-/ ========================================= */
 const getOneById = async (req, res) => {
   const { userId } = req.params;
   if (req.user == userId) {
     try {
       const result = await pool.query(`
-        SELECT id, email, first_name, last_name
+        SELECT id, email, first_name AS "firstName", last_name AS "lastName"
         FROM users
         WHERE id = $1`,
         [userId]);
@@ -78,20 +53,9 @@ const getOneById = async (req, res) => {
   }
 }
 
-/*=========================================
-/   UPDATE USER  -  [PUT]
-/   auth. required: yes
-/   endpoint: /users/{userId}
-/   req.body: {
-/       ["email":"johndoe@example.com"],
-/       ["password":"MyGoodPwd"],
-/       ["first_name":"John"],
-/       ["last_name":"Doe"]
-/     }  --  (only changed properties are needed)
-/ ========================================= */
 const updateById = async (req, res) => {
   const { userId } = req.params;
-  const { email, password, first_name, last_name } = req.body;
+  const { email, password, firstName, lastName } = req.body;
   
   const fields = [];
   const values = [];
@@ -106,13 +70,13 @@ const updateById = async (req, res) => {
     fields.push('password');
     values.push(hash);
   }
-  if (first_name) {
+  if (firstName) {
     fields.push('first_name');
-    values.push(first_name);
+    values.push(firstName);
   }
-  if (last_name) {
+  if (lastName) {
     fields.push('last_name');
-    values.push(last_name);
+    values.push(lastName);
   }
 
   if (fields.length === 0) {
@@ -152,16 +116,7 @@ const deleteById = async (req, res) => {
 module.exports = {
   register,
   getAll,
-//  create,
   getOneById,
   updateById,
   deleteById
 }
-
-/*========== TEST DATA ==========
-{"id":1,"email":"matraca@trica.com","password":"alue23skj","first_name":"Matraca","last_name":"Trica"}
-{"id":2,"email":"naba@bisco.com","password":"asi3210ij$","first_name":"Naba","last_name":"Bisco"}
-{"id":3,"email":"johndoe@example.com","password":"MyGoodPwd","first_name":"John","last_name":"Doe"}
-{"id":4,"email":"ohmygod@heaven.com","password":"MyGodPwd","first_name":"Jesus","last_name":"Nazarian"}
-{"id":5,"email":"earth@galaxy.com","password":"blueplanet","first_name":"Mighty","last_name":"Planet"}
-*/

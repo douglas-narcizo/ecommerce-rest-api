@@ -4,7 +4,7 @@ const pool = require('../db');
 const cartProdutcsInfo = async (cartId) => {
     try {
         const cartItemsInfo = await pool.query(`
-            SELECT cart_items.id, cart_id, product_id, qty, name, price, description, category
+            SELECT cart_items.id, cart_id AS "cartId", product_id AS "productId", qty, name, price, description, category
             FROM cart_items
             INNER JOIN products
             ON products.id = cart_items.product_id
@@ -22,7 +22,7 @@ const cartProdutcsInfo = async (cartId) => {
 const getCartItems = async (cartId) => {
     try {
         const cartItemsResult = await pool.query(
-            'SELECT * FROM cart_items WHERE cart_id = $1',
+            'SELECT id, cart_id AS "cartId", product_id AS "productId", qty FROM cart_items WHERE cart_id = $1',
             [cartId]
         );
         if (cartItemsResult.rows.length === 0) {
@@ -32,7 +32,7 @@ const getCartItems = async (cartId) => {
             };
         }
         const cartProducts = await cartProdutcsInfo(cartId);
-        const total = cartProducts.map(item => item.subtotal).reduce((a, b) => a + b, 0);
+        const total = cartProducts.map(item => item.subtotal).reduce((a, b) => a + b, 0).toFixed(2);
         return {
             items: cartProducts,
             total: total,
@@ -45,7 +45,7 @@ const getCartItems = async (cartId) => {
 const getCart = async (cartId) => {
     try {
         let cartResult = await pool.query(
-            'SELECT * FROM carts WHERE id = $1',
+            'SELECT id, user_id AS "userId", created, modified FROM carts WHERE id = $1',
             [cartId]
         );
         if (cartResult.rows.length === 0) {
@@ -62,7 +62,7 @@ const getCart = async (cartId) => {
 }
 
 const addToCart = async (req, res) => {
-    const { product_id, qty } = req.body;
+    const { productId, qty } = req.body;
     let { cartId } = req.params;
     const userId = req.user;
     try {
@@ -88,14 +88,14 @@ const addToCart = async (req, res) => {
         } else if (cartId) {
             // If a cartId is provided, select it
             cartResult = await pool.query(
-                'SELECT * FROM carts WHERE id = $1',
+                'SELECT id, user_id AS "userId", created, modified FROM carts WHERE id = $1',
                 [cartId]
             );
             cart = cartResult.rows[0];
         } else {
             // If user is not logged and no cartId is provided, create a new empty cart without user
             cartResult = await pool.query(
-                'INSERT INTO carts (created) VALUES (NOW()) RETURNING *'
+                'INSERT INTO carts (created) VALUES (NOW()) RETURNING id, user_id AS "userId", created, modified'
             );
             cart = cartResult.rows[0];
         }
@@ -103,7 +103,7 @@ const addToCart = async (req, res) => {
         // Look if current product is already in the cart
         const cartItemResult = await pool.query(
             'SELECT * FROM cart_items WHERE cart_id = $1 AND product_id = $2',
-            [cart.id, product_id]
+            [cart.id, productId]
         );
 
         // If product is found, update it, and if not, add to cart
@@ -112,28 +112,28 @@ const addToCart = async (req, res) => {
             cartItems = await pool.query(`
                 INSERT INTO cart_items (cart_id, product_id, qty)
                 VALUES ($1, $2, $3)
-                RETURNING *`,
-                [cart.id, product_id, qty]
+                RETURNING id, cart_id AS "cartId", product_id AS "productId", qty`,
+                [cart.id, productId, qty]
             );
         } else if (cartItemResult.rows[0].qty + qty <= 0) {
             cartItems = await pool.query(`
                 DELETE FROM cart_items
                 WHERE cart_id = $1 AND product_id = $2
-                RETURNING *`,
-                [cart.id, product_id]
+                RETURNING id, cart_id AS "cartId", product_id AS "productId", qty`,
+                [cart.id, productId]
             );
         } else {
             cartItems = await pool.query(`
                 UPDATE cart_items SET qty = qty + $3
                 WHERE cart_id = $1 AND product_id = $2
-                RETURNING *`,
-                [cart.id, product_id, qty]
+                RETURNING id, cart_id AS "cartId", product_id AS "productId", qty`,
+                [cart.id, productId, qty]
             );
         }
         cartItems = await cartProdutcsInfo(cart.id);
         // Update cart modification timestamp
         cartResult = await pool.query(`
-            UPDATE carts SET modified = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`,
+            UPDATE carts SET modified = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id, user_id AS "userId", created, modified`,
             [cart.id]
         );
         cart = cartResult.rows[0];
@@ -203,11 +203,3 @@ module.exports = {
     getById,
     deleteById
 }
-
-/*
-SAMPLE DATA FOR TESTING PURPOSES:
-
-user_id, product_id, qty
-{"user_id":1,"product_id":2,"qty":3}
-
-*/

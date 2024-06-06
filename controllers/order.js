@@ -23,7 +23,7 @@ const orderProdutcsInfo = async (orderId) => {
 const getOrder = async (orderId) => {
     try {
         const orderResult = await pool.query(
-            'SELECT * FROM orders WHERE id = $1',
+            'SELECT id, user_id AS "userId", total, status, created, modified FROM orders WHERE id = $1',
             [orderId]
         );
         if (orderResult.rows.length === 0) {
@@ -53,7 +53,7 @@ const updateProductsStock = async (orderId) => {
                 UPDATE products
                 SET stock = stock - $2
                 WHERE id = $1`,
-                [item.product_id, item.qty]
+                [item.productId, item.qty]
             );
         });
         return orderItemsInfo.rows;
@@ -76,8 +76,8 @@ const create = async (req, res, next) => {
     try {
         // Create order
         const orderResult = await pool.query(
-            'INSERT INTO orders (user_id, total) VALUES ($1, $2) RETURNING *',
-            [userId, cart.total.toFixed(2)]
+            'INSERT INTO orders (user_id, total) VALUES ($1, $2) RETURNING id, user_id AS "userId", total, status, created, modified',
+            [userId, cart.total]
         );
         if (orderResult.rows.length === 0) {
             return res.status(500).json({ message: err.message });
@@ -85,12 +85,12 @@ const create = async (req, res, next) => {
         const order = orderResult.rows[0];
         // Populate order_items with cart_items
         const newOrderArray = cart.items.map(
-                item => `(${order.id},${item.product_id},${item.qty})`
+                item => `(${order.id},${item.productId},${item.qty})`
             ).join(",");
         await pool.query(`
             INSERT INTO order_items (order_id, product_id, qty)
             VALUES ${newOrderArray}
-            RETURNING *`
+            RETURNING id, order_id AS "orderId", product_id AS "productId", qty`
         );
         // Get items details and attach them to order
         const itemsDetails = await orderProdutcsInfo(order.id);
@@ -101,7 +101,7 @@ const create = async (req, res, next) => {
         console.log('Payment time!!!');
         // ------------ On payment OK ------------
 
-        // ------ UPDATE PRODUCTS STOCK HERE -----
+        // -------- Update products stock --------
         console.log('Updating products stock!!');
         await updateProductsStock(order.id);
 
@@ -136,10 +136,10 @@ const getByUserId = async (req, res) => {
 };
 
 const getById = async (req, res) => {
-/*  const userId = req.user;
+    const userId = req.user;
     if (!userId) {
         return res.status(400).send({ message: 'Please login first!' });
-    } */
+    }
     const { orderId } = req.params;
     try {
         const order = await getOrder(orderId);
@@ -177,7 +177,7 @@ const updateById = async (req, res) => {
         UPDATE orders
         SET ${setClause}
         WHERE id = $${fields.length + 1}
-        RETURNING *`,
+        RETURNING id, user_id AS "userId", total, status, created, modified`,
         [...values, orderId]
       );
       res.status(200).json(result.rows[0]);
@@ -187,10 +187,10 @@ const updateById = async (req, res) => {
   }
 
 const deleteById = async (req, res) => {
-/*  const userId = req.user;
+    const userId = req.user;
     if (!userId) {
         return res.status(400).send({ message: 'Please login first!' });
-    } */
+    }
     const { orderId } = req.params;
     try {
       await pool.query(
