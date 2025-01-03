@@ -18,7 +18,10 @@ const orderRouter = require('./routes/order')
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true,
+}));
 
 // Configure session
 app.use(
@@ -35,7 +38,7 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use('/api/users', userRouter);
+app.use('/api/user', userRouter);
 app.use('/api/products', productRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/orders', orderRouter);

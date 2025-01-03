@@ -5,7 +5,7 @@ const userCtl = require('../controllers/user');
 /**
  * @swagger
  * tags:
- *   name: users
+ *   name: user
  *   description: The Users managing API
  */
 
@@ -15,10 +15,9 @@ userRouter.route('/register')
 
 // Login User
 userRouter.route('/login')
-.post( passport.authenticate('local', { failureRedirect: "/login" }),
+.post( passport.authenticate('local'),
   (req, res) => {
-    //res.status(200).json(req.user);
-    res.status(200).redirect(`/api/users/${req.user.id}`);
+    res.status(200).json(req.user);
 });
 
 // Logout User
@@ -29,23 +28,20 @@ userRouter.post('/logout', (req, res, next) => {
   });
 });
 
-userRouter.route('/')
-.get( userCtl.getAll );
 
 userRouter.route('/:userId')
 .get( userCtl.getOneById )
 .put( userCtl.updateById )
 .delete( userCtl.deleteById );
 
-
 module.exports = userRouter;
 
 /**
  * @swagger
- * /api/users/register:
+ * /api/user/register:
  *   post:
- *     summary: the endpoint to register a new user
- *     tags: [users]
+ *     summary: register a new user's account
+ *     tags: [user]
  *     requestBody:
  *       required: true
  *       content:
@@ -99,10 +95,10 @@ module.exports = userRouter;
 
 /**
  * @swagger
- * /api/users/login:
+ * /api/user/login:
  *   post:
  *     summary: logs user into the system
- *     tags: [users]
+ *     tags: [user]
  *     requestBody:
  *       required: true
  *       content:
@@ -131,7 +127,7 @@ module.exports = userRouter;
  *                 id:
  *                   type: integer
  *                   format: int64
- *                   description: Auto-generated user ID
+ *                   description: User ID
  *                   example: 10
  *                 email:
  *                   type: string
@@ -142,10 +138,10 @@ module.exports = userRouter;
  *                 lastName:
  *                   type: string
  *                   example: "Doe"
- * /api/users/logout:
+ * /api/user/logout:
  *   post:
  *     summary: logs out current logged in user session
- *     tags: [users]
+ *     tags: [user]
  *     description: ''
  *     parameters: []
  *     responses:
@@ -155,18 +151,10 @@ module.exports = userRouter;
 
 /**
  * @swagger
- * /api/users/{userId}:
+ * /api/user/:
  *   put:
  *     summary: UPDATES a user's info
- *     tags: [users]
- *     parameters:
- *       - name: userId
- *         in: path
- *         description: ID of user to update
- *         required: true
- *         schema:
- *           type: integer
- *           format: int64
+ *     tags: [user]
  *     requestBody:
  *       required: true
  *       content:
@@ -174,6 +162,11 @@ module.exports = userRouter;
  *           schema:
  *             type: object
  *             properties:
+ *               userId:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID of user to update
+ *                 example: "01234567-89ab-cdef-0123-456789abcedf"
  *               email:
  *                 type: string
  *                 description: The email that is used to log into user account
@@ -197,16 +190,20 @@ module.exports = userRouter;
  *       400:
  *         description: Bad request
  *   get:
- *     summary: returns the identified user object
- *     tags: [users]
- *     parameters:
- *       - name: userId
- *         in: path
- *         description: the ID of the user
- *         required: true
- *         schema:
- *           type: integer
- *           format: int64
+ *     summary: returns the currently logged user object
+ *     tags: [user]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 format: uuid
+ *                 description: the ID of the user to be retrieved
+ *                 example: "01234567-89ab-cdef-0123-456789abcedf"
  *     responses:
  *       200:
  *         description: OK - the user object is returned
@@ -218,15 +215,19 @@ module.exports = userRouter;
  *         description: user not found
  *   delete:
  *     summary: DELETEs the user with provided ID
- *     tags: [users]
- *     parameters:
- *       - name: userId
- *         in: path
- *         description: ID of user to delete
- *         required: true
- *         schema:
- *           type: integer
- *           format: int64
+ *     tags: [user]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 format: uuid
+ *                 description: the ID of the user to be deleted
+ *                 example: "01234567-89ab-cdef-0123-456789abcedf"
  *     responses:
  *       204:
  *         description: No content - user deleted
@@ -242,10 +243,10 @@ module.exports = userRouter;
  *       type: object
  *       properties:
  *         id:
- *           type: integer
- *           format: int64
+ *           type: string
+ *           format: uuid
  *           description: The user's ID
- *           example: 1
+ *           example: "01234567-89ab-cdef-0123-456789abcedf"
  *         email:
  *           type: string
  *           description: The email used to create user account and log in

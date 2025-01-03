@@ -18,6 +18,7 @@ const register = async (req, res) => {
   }
 }
 
+/* --- obsolete admin function to return all users list ---
 const getAll = async (req, res) => {
   if (req.user) {
     try {
@@ -30,6 +31,7 @@ const getAll = async (req, res) => {
     res.status(400).json({ message: 'Please login first!' });
   }
 }
+ */
 
 const getOneById = async (req, res) => {
   const { userId } = req.params;
@@ -54,7 +56,7 @@ const getOneById = async (req, res) => {
 }
 
 const updateById = async (req, res) => {
-  const { userId } = req.params;
+  const { userId } = req.body;
   const { email, password, firstName, lastName } = req.body;
   
   const fields = [];
@@ -101,7 +103,7 @@ const updateById = async (req, res) => {
 }
 
 const deleteById = async (req, res) => {
-  const { userId } = req.params;
+  const { userId } = req.body;
   try {
     await pool.query(
       'DELETE FROM users WHERE id = $1',
@@ -115,7 +117,7 @@ const deleteById = async (req, res) => {
 
 module.exports = {
   register,
-  getAll,
+//  getAll,
   getOneById,
   updateById,
   deleteById
