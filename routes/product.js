@@ -26,8 +26,8 @@ module.exports = productRouter;
  *     summary: returns a list of products, queried by category
  *     tags: [products]
  *     parameters:
- *       - category: productId
- *         in: query
+ *       - in: query
+ *         name: category
  *         description: Categories to filter by
  *         required: false
  *         explode: true
@@ -104,8 +104,8 @@ module.exports = productRouter;
  *         description: ID of product to update
  *         required: true
  *         schema:
- *           type: integer
- *           format: int64
+ *           type: string
+ *           format: uuid
  *     responses:
  *       201:
  *         description: Product successfully updated
@@ -124,8 +124,8 @@ module.exports = productRouter;
  *         description: the ID of the product
  *         required: true
  *         schema:
- *           type: integer
- *           format: int64
+ *           type: string
+ *           format: uuid
  *     responses:
  *       200:
  *         description: OK - the product object is returned
@@ -144,8 +144,8 @@ module.exports = productRouter;
  *         description: ID of product to delete
  *         required: true
  *         schema:
- *           type: integer
- *           format: int64
+ *           type: string
+ *           format: uuid
  *     responses:
  *       204:
  *         description: No content - product deleted
@@ -161,14 +161,18 @@ module.exports = productRouter;
  *       type: object
  *       properties:
  *         id:
- *           type: integer
- *           format: int64
+ *           type: string
+ *           format: uuid
  *           description: The item's ID
- *           example: 1
+ *           example: "01234567-89ab-cdef-0123-456789abcedf"
  *         name:
  *           type: string
  *           description: The product's name
  *           example: "pencil"
+ *         category:
+ *           type: string
+ *           description: The category of the product
+ *           example: "stationery"
  *         price:
  *           type: number
  *           description: Product's price per unit
@@ -177,13 +181,13 @@ module.exports = productRouter;
  *           type: string
  *           description: The product's description
  *           example: "An excellent tool to write"
- *         category:
- *           type: string
- *           description: The category of the product
- *           example: "stationery"
  *         stock:
  *           type: integer
  *           format: int32
  *           description: The quantity of the product in the cart
  *           example: 2
+ *         preview:
+ *           type: string
+ *           description: URL for product's preview image
+ *           example: "../images/pencil.jpg"
  */

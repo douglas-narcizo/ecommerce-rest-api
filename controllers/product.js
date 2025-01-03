@@ -1,14 +1,14 @@
 const pool = require('../db');
 
 const create = async (req, res) => {
-  const { name, price, description, category, stock } = req.body;
+  const { name, price, description, category, stock, preview } = req.body;
   console.log(req.body);
   try {
     const result = await pool.query(`
-      INSERT INTO products (name, price, description, category, stock)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO products (name, price, description, category, stock, preview)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *`,
-      [name, price, description, category, stock]
+      [name, price, description, category, stock, preview]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -52,7 +52,7 @@ const getOneById = async (req, res) => {
 
 const updateById = async (req, res) => {
   const { productId } = req.params;
-  const { name, price, description, category, stock } = req.body;
+  const { name, price, description, category, stock, preview } = req.body;
   const fields = [];
   const values = [];
 
@@ -75,6 +75,10 @@ const updateById = async (req, res) => {
   if (stock) {
     fields.push('stock');
     values.push(stock);
+  }
+  if (preview) {
+    fields.push('preview');
+    values.push(preview);
   }
 
   if (fields.length === 0) {
