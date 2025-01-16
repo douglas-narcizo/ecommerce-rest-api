@@ -7,7 +7,7 @@ const options = {
         openapi: '3.0.3',
         info: {
             title: 'E-commerce REST API',
-            version: '1.0.0',
+            version: '1.0.2',
             description: `This is the starter point for an **E-commerce Server** based on the OpenAPI 3.0 specification.<br>
             It's part of a Portfolio Project on Codecademy's **Full Stack Engineer** career path.`,
         },

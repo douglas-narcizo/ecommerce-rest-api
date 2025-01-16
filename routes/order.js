@@ -1,12 +1,5 @@
 const orderRouter = require('express').Router();
 const orderCtl = require('../controllers/order');
-
-/**
- * @swagger
- * tags:
- *   name: orders
- *   description: The Orders managing API
- */
  
 orderRouter.route('/')
 .get( orderCtl.getByUserId );

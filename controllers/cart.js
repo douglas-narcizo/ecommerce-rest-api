@@ -4,7 +4,7 @@ const pool = require('../db');
 const cartProdutcsInfo = async (cartId) => {
     try {
         const cartItemsInfo = await pool.query(`
-            SELECT cart_items.id, cart_id AS "cartId", product_id AS "productId", qty, name, price, description, category
+            SELECT cart_items.id, cart_id AS "cartId", product_id AS "productId", qty, name, price, description, category, preview
             FROM cart_items
             INNER JOIN products
             ON products.id = cart_items.product_id
@@ -53,8 +53,9 @@ const getCart = async (cartId) => {
         }
         const cart = cartResult.rows[0];
         cartResult = await getCartItems(cartId);
+        cart.items = cartResult.items;
+        cart.itemsCount = cart.items.map(item => item.qty).reduce((a, b) => a + b, 0);
         cart.total = cartResult.total;
-        cart.items = cartResult.items
         return cart;
     } catch (err) {
         return err;
@@ -137,8 +138,9 @@ const addToCart = async (req, res) => {
             [cart.id]
         );
         cart = cartResult.rows[0];
-        cart.total = cartItems.map(item => item.subtotal).reduce((a, b) => a + b, 0).toFixed(2);
         cart.items = cartItems;
+        cart.itemsCount = cartItems.map(item => item.qty).reduce((a, b) => a + b, 0);
+        cart.total = cartItems.map(item => item.subtotal).reduce((a, b) => a + b, 0).toFixed(2);
         res.status(201).json(cart);
 
     } catch (err) {
@@ -161,15 +163,35 @@ const getByUserId = async (req, res) => {
         }
         const cart = cartResult.rows[0];
         cartResult = await getCartItems(cart.id);
-        cart.total = cartResult.total;
         cart.items = cartResult.items;
+        cart.itemsCount = cart.items.map(item => item.qty).reduce((a, b) => a + b, 0);
+        cart.total = cartResult.total;
         res.status(200).json(cart);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
 
-const getById = async (req, res) => {
+const deleteByUserId = async (req, res) => {
+    if (!req.user) {
+        return res.status(404).json({ message: 'Please log in first!' });
+    }
+    try {
+      const userId = req.user;
+      const result = await pool.query(
+        'DELETE FROM carts WHERE user_id = $1',
+        [userId]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ message: 'No cart found for this user' });
+      }
+      res.status(204).send(); //(200).json({ message: 'Cart deleted successfully' });
+    } catch (err) {
+      res.status(500).json({ message: err.message }); //({ message: 'Server error', error: err.message });
+    }
+  };
+  
+  const getById = async (req, res) => {
     const { cartId } = req.params;
     try {
         const cart = await getCart(cartId);
@@ -200,6 +222,7 @@ module.exports = {
     getCart,
     addToCart,
     getByUserId,
+    deleteByUserId,
     getById,
     deleteById
 }

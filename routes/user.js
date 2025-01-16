@@ -2,13 +2,6 @@ const userRouter = require('express').Router();
 const passport = require('passport');
 const userCtl = require('../controllers/user');
 
-/**
- * @swagger
- * tags:
- *   name: user
- *   description: The Users managing API
- */
-
 // Register User
 userRouter.route('/register')
 .post( userCtl.register );
@@ -18,6 +11,16 @@ userRouter.route('/login')
 .post( passport.authenticate('local'),
   (req, res) => {
     res.status(200).json(req.user);
+});
+
+// Verify Token
+userRouter.route('/verify-session')
+.get((req, res) => {
+  if (req.isAuthenticated()) {
+    res.status(200).json({ message: 'Authenticated' });
+  } else {
+    res.status(401).json({ message: 'Not authenticated' });
+  }
 });
 
 // Logout User
@@ -147,6 +150,27 @@ module.exports = userRouter;
  *     responses:
  *       default:
  *         description: Successful operation
+ * /api/user/verify-session:
+ *   get:
+ *     summary: returns the authentication status for the current session
+ *     tags: [user]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 format: uuid
+ *                 description: the ID of the user to be retrieved
+ *                 example: "01234567-89ab-cdef-0123-456789abcedf"
+ *     responses:
+ *       200:
+ *         description: OK - user is authenticated
+ *       401:
+ *         description: not authenticated
  */
 
 /**
