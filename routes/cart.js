@@ -2,16 +2,10 @@ const cartRouter = require('express').Router();
 const cartCtl = require('../controllers/cart');
 const orderCtl = require('../controllers/order');
 
-/**
- * @swagger
- * tags:
- *   name: cart
- *   description: The Shopping Cart managing API
- */
- 
 cartRouter.route('/')
 .get( cartCtl.getByUserId )
-.post( cartCtl.addToCart );
+.post( cartCtl.addToCart )
+.delete( cartCtl.deleteByUserId );
 
 cartRouter.route('/:cartId')
 .get( cartCtl.getById )
@@ -28,7 +22,7 @@ module.exports = cartRouter;
  * @swagger
  * /api/cart:
  *   post:
- *     summary: a POST request to this endpoint ADDS or UPDATES a product in the shopping cart
+ *     summary: this route is intended to be used when you DON'T have a CART ID, when the first product ia added.
  *     tags: [cart]
  *     requestBody:
  *       required: true
@@ -56,7 +50,7 @@ module.exports = cartRouter;
  *       400:
  *         description: Bad request
  *   get:
- *     summary: a GET request to this endpoint returns the current session's shopping cart object
+ *     summary: use this endpoint to get the shopping cart object for the current user, if logged in.
  *     tags: [cart]
  *     requestBody:
  *       description: If user is logged in, their ID is retrieved from session and attached to the request
@@ -66,11 +60,11 @@ module.exports = cartRouter;
  *           schema:
  *             type: object
  *             properties:
- *               user:
- *                 type: integer
- *                 format: int64
+ *               userId:
+ *                 type: string
+ *                 format: uuid
  *                 description: the User ID must be provided by the user session - the user must be signed in
- *                 example: 1
+ *                 example: "01234567-89ab-cdef-0123-456789abcedf"
  *     responses:
  *       200:
  *         description: OK - the cart object is returned
@@ -80,6 +74,26 @@ module.exports = cartRouter;
  *               $ref: '#/components/schemas/cart'
  *       400:
  *         description: Cart not found
+ *   delete:
+ *     summary: DELETEs the cart for the current user, if logged in
+ *     tags: [cart]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 format: uuid
+ *                 description: the ID of the user whose cart should be deleted
+ *                 example: "01234567-89ab-cdef-0123-456789abcedf"
+ *     responses:
+ *       204:
+ *         description: No content - cart deleted
+ *       500:
+ *         description: Server error
  */
 
 /**

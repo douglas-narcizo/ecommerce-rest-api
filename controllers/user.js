@@ -18,21 +18,6 @@ const register = async (req, res) => {
   }
 }
 
-/* --- obsolete admin function to return all users list ---
-const getAll = async (req, res) => {
-  if (req.user) {
-    try {
-      const result = await pool.query('SELECT id, email, first_name AS "firstName", last_name AS "lastName" FROM users');
-      res.json(result.rows);
-    } catch (err) {
-      res.status(500).json({ message: err.message });
-    }
-  } else {
-    res.status(400).json({ message: 'Please login first!' });
-  }
-}
- */
-
 const getOneById = async (req, res) => {
   const { userId } = req.params;
   if (req.user == userId) {

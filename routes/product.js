@@ -1,13 +1,6 @@
 const productRouter = require('express').Router();
 const productCtl = require('../controllers/product');
 
-/**
- * @swagger
- * tags:
- *   name: products
- *   description: The Products managing API
- */
- 
 productRouter.route('/')
 .get( productCtl.getList )
 .post( productCtl.create );
