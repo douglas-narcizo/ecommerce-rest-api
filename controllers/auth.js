@@ -1,6 +1,8 @@
 const LocalStrategy = require('passport-local').Strategy;
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const bcrypt = require('bcryptjs');
 const pool = require('../db');
+const userCtl = require('../controllers/user');
 
 module.exports = (passport) => {
   passport.use(
@@ -30,6 +32,21 @@ module.exports = (passport) => {
     })
   );
 
+  passport.use(
+    new GoogleStrategy({
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: 'http://localhost:4000/api/user/google/callback'
+    },
+    async (token, tokenSecret, profile, done) => {
+      try {
+        await userCtl.getOneByGoogleId(profile, done);
+      } catch (err) {
+        return done(err);
+      }
+    })
+  );
+
   passport.serializeUser((user, done) => {
     done(null, user.id);
   });
@@ -40,7 +57,7 @@ module.exports = (passport) => {
       if (userResult.rows.length === 0) {
         return done(new Error('User not found'));
       }
-      done(null, userResult.rows[0].id); 
+      done(null, userResult.rows[0]); //.id); 
     } catch (err) {
       done(err);
     }

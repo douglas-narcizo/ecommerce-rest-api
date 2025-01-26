@@ -19,8 +19,8 @@ const register = async (req, res) => {
 }
 
 const getOneById = async (req, res) => {
-  const { userId } = req.params;
-  if (req.user == userId) {
+  const { userId } = req.body;
+  if (req.user && req.user.id == userId) {
     try {
       const result = await pool.query(`
         SELECT id, email, first_name AS "firstName", last_name AS "lastName"
@@ -40,9 +40,41 @@ const getOneById = async (req, res) => {
   }
 }
 
+const getOneByGoogleId = async (profile, done) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, email, first_name AS "firstName", last_name AS "lastName"
+      FROM users
+      WHERE google ->> 'id' = $1`,
+      [profile.id]);
+
+    if (result.rows.length === 0) {
+      // User does not exist, create a new user
+      const profileData = {
+        id: profile.id,
+        email: profile.emails[0].value,
+        firstName: profile.name.givenName,
+        lastName: profile.name.familyName,
+        picture: profile.photos[0].value,
+      };
+      const newUser = await pool.query(`
+        INSERT INTO users (google, email, first_name, last_name)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, email, first_name AS "firstName", last_name AS "lastName"`,
+        [profileData, profileData.email, profileData.firstName, profileData.lastName]);
+
+      return done(null, newUser.rows[0]);
+    } else {
+      // User found, return the user
+      return done(null, result.rows[0]);
+    }
+  } catch (err) {
+    return done(err);
+  }
+};
+
 const updateById = async (req, res) => {
-  const { userId } = req.body;
-  const { email, password, firstName, lastName } = req.body;
+  const { userId, email, password, firstName, lastName } = req.body;
   
   const fields = [];
   const values = [];
@@ -66,26 +98,25 @@ const updateById = async (req, res) => {
     values.push(lastName);
   }
 
-  if (fields.length === 0) {
-    return res.status(400).json({ error: 'No fields to update' });
-  }
-
-  const setClause = fields.map((field, index) => `${field} = $${index + 1}`).join(', ');
-  console.log(setClause);
-  console.log(`UPDATE users SET ${setClause} WHERE id = $${fields.length + 1}`, [...values, userId]);
+  const setClause = fields.map((field, index) => `${field} = $${index + 2}`).join(', ');
 
   try {
-    await pool.query(`
+    const result = await pool.query(`
       UPDATE users
       SET ${setClause}
-      WHERE id = $${fields.length + 1}`,
-      [...values, userId]
-    );
-    res.status(200).json({ message: 'User updated successfully' });
+      WHERE id = $1
+      RETURNING id, email, first_name AS "firstName", last_name AS "lastName"`,
+      [userId, ...values]);
+
+    if (result.rows.length === 0) {
+      res.status(404).json({ message: 'User not found!' });
+    } else {
+      res.json(result.rows[0]);
+    }
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ message: err.message });
   }
-}
+};
 
 const deleteById = async (req, res) => {
   const { userId } = req.body;
@@ -102,8 +133,8 @@ const deleteById = async (req, res) => {
 
 module.exports = {
   register,
-//  getAll,
   getOneById,
+  getOneByGoogleId,
   updateById,
   deleteById
 }

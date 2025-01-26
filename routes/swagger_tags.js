@@ -1,17 +1,17 @@
 /**
  * @swagger
  * tags:
- *   name: user
- *   description: The Users managing API
- */
-
-/**
- * @swagger
- * tags:
  *   name: products
  *   description: The Products managing API
  */
  
+/**
+ * @swagger
+ * tags:
+ *   name: user
+ *   description: The Users managing API
+ */
+
 /**
  * @swagger
  * tags:

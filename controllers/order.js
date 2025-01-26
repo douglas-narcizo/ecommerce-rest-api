@@ -43,7 +43,7 @@ const getOrder = async (orderId) => {
 const updateProductsStock = async (orderId) => {
     try {
         const orderItemsInfo = await pool.query(`
-            SELECT id, product_id, qty
+            SELECT id, product_id AS "productId", qty
             FROM order_items
             WHERE order_id = $1;`,
             [orderId]
@@ -52,7 +52,7 @@ const updateProductsStock = async (orderId) => {
             await pool.query(`
                 UPDATE products
                 SET stock = stock - $2
-                WHERE id = $1`,
+                WHERE id = $1;`,
                 [item.productId, item.qty]
             );
         });
@@ -64,7 +64,7 @@ const updateProductsStock = async (orderId) => {
 
 const create = async (req, res, next) => {
     const { cartId } = req.params;
-    const userId = req.user;
+    const userId = req.user.id;
 
     const cart = await getCart(cartId);
     if (!cart) {
@@ -85,7 +85,7 @@ const create = async (req, res, next) => {
         const order = orderResult.rows[0];
         // Populate order_items with cart_items
         const newOrderArray = cart.items.map(
-                item => `(${order.id},${item.productId},${item.qty})`
+                item => `(${order.id},'${item.productId}',${item.qty})`
             ).join(",");
         await pool.query(`
             INSERT INTO order_items (order_id, product_id, qty)
