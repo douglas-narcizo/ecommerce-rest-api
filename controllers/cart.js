@@ -65,7 +65,7 @@ const getCart = async (cartId) => {
 const addToCart = async (req, res) => {
     const { productId, qty } = req.body;
     let { cartId } = req.params;
-    const userId = req.user;
+    const userId = req.user.id;
     try {
         let cart;
         let cartResult;
@@ -153,7 +153,7 @@ const getByUserId = async (req, res) => {
         return res.status(404).json({ message: 'Please log in first!' });
     }
     try {
-        const userId = req.user;
+        const userId = req.user.id;
         let cartResult = await pool.query(
             'SELECT * FROM carts WHERE user_id = $1',
             [userId]
@@ -177,7 +177,7 @@ const deleteByUserId = async (req, res) => {
         return res.status(404).json({ message: 'Please log in first!' });
     }
     try {
-      const userId = req.user;
+      const userId = req.user.id;
       const result = await pool.query(
         'DELETE FROM carts WHERE user_id = $1',
         [userId]

@@ -13,9 +13,11 @@ const createTables = async () => {
     CREATE TABLE IF NOT EXISTS users (
       id              UUID            DEFAULT GEN_RANDOM_UUID()   PRIMARY KEY,
       email           VARCHAR(50)     NOT NULL,      
-      password        TEXT            NOT NULL,
+      password        TEXT,
       first_name      VARCHAR(50)     NOT NULL,
       last_name       VARCHAR(50)     NOT NULL,
+      google          JSON,
+      facebook        JSON,
       is_admin        BOOL            DEFAULT FALSE
     );
   `
