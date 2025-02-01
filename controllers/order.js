@@ -1,5 +1,11 @@
 const pool = require('../db');
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const { getCart } = require('./cart');
+
+// This is a public sample test API key.
+// Don’t submit any personally identifiable information in requests made with this key.
+// Sign in to see your own test API key embedded in code samples.
+const stripe = require('stripe')(stripeSecretKey);
 
 // ----- HELPER: retrieve product info from table "products"
 const orderProdutcsInfo = async (orderId) => {
@@ -63,15 +69,15 @@ const updateProductsStock = async (orderId) => {
 }
 
 const create = async (req, res, next) => {
+    if (!req.user) {
+        return res.status(400).send({ message: 'Please login first!' });
+    }
     const { cartId } = req.params;
     const userId = req.user.id;
 
     const cart = await getCart(cartId);
     if (!cart) {
         return res.status(400).send({ message: 'The order is empty!' });
-    }
-    if (!userId) {
-        return res.status(400).send({ message: 'Please login first!' });
     }
     try {
         // Create order
@@ -96,14 +102,14 @@ const create = async (req, res, next) => {
         const itemsDetails = await orderProdutcsInfo(order.id);
         order.items = itemsDetails;
 
-        // ----- PAYMENT TIME RIGHT HERE !!! -----
+        /* ----- PAYMENT TIME RIGHT HERE !!! -----
 
         console.log('Payment time!!!');
         // ------------ On payment OK ------------
 
         // -------- Update products stock --------
         console.log('Updating products stock!!');
-        await updateProductsStock(order.id);
+        await updateProductsStock(order.id); */
 
         return res.status(201).json(order);
     } catch (err) {
@@ -203,10 +209,43 @@ const deleteById = async (req, res) => {
     }
   }
 
+const createPaymentIntet = async (req, res) => {
+    const { items } = req.body;
+  
+    const calculateOrderAmount = (items) => {
+      // Calculate the order total on the server to prevent
+      // people from directly manipulating the amount on the client
+      let total = 0;
+      items.forEach((item) => {
+        total += item.price * item.qty;
+      });
+      total = Math.round(total * 100);
+      return total;
+    };
+
+    calculateOrderAmount(items);
+    // res.send({ message: 'Payment intent created successfully' });
+    // Create a PaymentIntent with the order amount and currency
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: calculateOrderAmount(items),
+      currency: "usd",
+      // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+  
+    res.send({
+      clientSecret: paymentIntent.client_secret,
+    });
+  }
+
 module.exports = {
     create,
     getByUserId,
     getById,
     updateById,
-    deleteById
+    deleteById,
+    createPaymentIntet,
+    updateProductsStock
 }
