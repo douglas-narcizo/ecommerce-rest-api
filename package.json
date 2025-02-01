@@ -1,6 +1,6 @@
 {
   "name": "ecommerce-rest-api",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "RESTful API for e-commerce applications",
   "main": "index.js",
   "scripts": {
@@ -20,6 +20,7 @@
     "passport-google-oauth20": "^2.0.0",
     "passport-local": "^1.0.0",
     "pg": "^8.11.5",
+    "stripe": "^17.5.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   },

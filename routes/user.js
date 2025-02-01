@@ -213,14 +213,12 @@ userRouter.post('/logout', (req, res, next) => {
  *         description: Successful operation
  */
 
-
 userRouter.route('/')
 .get( userCtl.getOneById )
 .put( userCtl.updateById )
 .delete( userCtl.deleteById );
 
 module.exports = userRouter;
-
 
 /**
  * @swagger

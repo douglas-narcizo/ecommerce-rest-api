@@ -1,8 +1,11 @@
 const orderRouter = require('express').Router();
 const orderCtl = require('../controllers/order');
- 
+
 orderRouter.route('/')
 .get( orderCtl.getByUserId );
+
+orderRouter.route('/create-payment-intent')
+.post( orderCtl.createPaymentIntet );
 
 orderRouter.route('/:orderId')
 .get( orderCtl.getById )
@@ -23,8 +26,9 @@ module.exports = orderRouter;
  *         description: the ID of the order
  *         required: true
  *         schema:
- *           type: integer
- *           format: int64
+ *           type: string
+ *           format: uuid
+ *           example: "01234567-89ab-cdef-0123-456789abcedf"
  *     responses:
  *       200:
  *         description: OK - the order object is returned
@@ -43,8 +47,9 @@ module.exports = orderRouter;
  *         description: ID of order to update
  *         required: true
  *         schema:
- *           type: integer
- *           format: int64
+ *           type: string
+ *           format: uuid
+ *           example: "01234567-89ab-cdef-0123-456789abcedf"
  *     responses:
  *       201:
  *         description: Order was successfully updated
@@ -63,11 +68,62 @@ module.exports = orderRouter;
  *         description: ID of order to delete
  *         required: true
  *         schema:
- *           type: integer
- *           format: int64
+ *           type: string
+ *           format: uuid
+ *           example: "01234567-89ab-cdef-0123-456789abcedf"
  *     responses:
  *       204:
  *         description: No content - order deleted
+ *       500:
+ *         description: Server error
+ * /api/order/create-payment-intent:
+ *   post:
+ *     summary: Create a payment intent for the order
+ *     tags: [orders]
+ *     parameters:
+ *       - name: orderId
+ *         in: path
+ *         description: ID of the order to create a payment intent for
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: "01234567-89ab-cdef-0123-456789abcedf"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     description:
+ *                       type: string
+ *                       description: The item's description
+ *                       example: "xl-tshirt"
+ *                     amount:
+ *                       type: number
+ *                       required: true
+ *                       description: The item's price
+ *                       example: 1000
+ *     responses:
+ *       200:
+ *         description: OK - Payment intent created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 clientSecret:
+ *                   type: string
+ *                   description: The client secret for the payment intent
+ *                   example: "pi_1F8vJg2eZvKYlo2C1z0g1z0g_secret_123456"
+ *       400:
+ *         description: Bad request
  *       500:
  *         description: Server error
  */
@@ -83,10 +139,10 @@ module.exports = orderRouter;
  *         - items
  *       properties:
  *         id:
- *           type: integer
- *           format: int64
+ *           type: string
+ *           format: uuid
  *           description: Auto-generated id of the order
- *           example: 1
+ *           example: "01234567-89ab-cdef-0123-456789abcedf"
  *         userId:
  *           type: integer
  *           format: int64
