@@ -1,5 +1,6 @@
 const LocalStrategy = require('passport-local').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const FacebookStrategy = require('passport-facebook').Strategy;
 const bcrypt = require('bcryptjs');
 const pool = require('../db');
 const userCtl = require('../controllers/user');
@@ -41,6 +42,22 @@ module.exports = (passport) => {
     async (token, tokenSecret, profile, done) => {
       try {
         await userCtl.getOneByGoogleId(profile, done);
+      } catch (err) {
+        return done(err);
+      }
+    })
+  );
+
+  passport.use(
+    new FacebookStrategy({
+      clientID: process.env.FACEBOOK_CLIENT_ID,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
+      callbackURL: 'http://localhost:4000/api/user/facebook/callback',
+      profileFields: ['id', 'name', 'picture'] // , 'email'
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        await userCtl.getOneByFacebookId(profile, done);
       } catch (err) {
         return done(err);
       }

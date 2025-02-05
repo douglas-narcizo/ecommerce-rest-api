@@ -73,6 +73,38 @@ const getOneByGoogleId = async (profile, done) => {
   }
 };
 
+const getOneByFacebookId = async (profile, done) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, email, first_name AS "firstName", last_name AS "lastName"
+      FROM users
+      WHERE facebook ->> 'id' = $1`,
+      [profile.id]);
+
+    if (result.rows.length === 0) {
+      // User does not exist, create a new user
+      const profileData = {
+        id: profile.id,
+        email: profile.id, // email: profile.emails[0].value,
+        firstName: profile.name.givenName, // profile.displayName.split(' ')[0]
+        lastName:  profile.name.familyName // profile.displayName.split(' ').pop()
+      };
+      const newUser = await pool.query(`
+        INSERT INTO users (facebook, email, first_name, last_name)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, email, first_name AS "firstName", last_name AS "lastName"`,
+        [profileData, profileData.email, profileData.firstName, profileData.lastName]);
+
+      return done(null, newUser.rows[0]);
+    } else {
+      // User found, return the user
+      return done(null, result.rows[0]);
+    }
+  } catch (err) {
+    return done(err);
+  }
+};
+
 const updateById = async (req, res) => {
   const { userId, email, password, firstName, lastName } = req.body;
   
@@ -135,6 +167,7 @@ module.exports = {
   register,
   getOneById,
   getOneByGoogleId,
+  getOneByFacebookId,
   updateById,
   deleteById
 }

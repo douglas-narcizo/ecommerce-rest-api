@@ -10,7 +10,7 @@ This API part of a Portfolio Project on Codecademy's **Full Stack Engineer** car
 Thanks for visiting! Comments or suggestions are more than welcome!
 
 ---
-![Static Badge](https://img.shields.io/badge/Version-1.0.4-blue?style=plastic)
+![Static Badge](https://img.shields.io/badge/Version-1.0.5-blue?style=plastic)
 ![Static Badge](https://img.shields.io/badge/OpenAPI-v._3.0-green?style=plastic)
 
 The API was developed according to OpenAPI directives, and once running, its documentation can be accessed on the following endpoit:

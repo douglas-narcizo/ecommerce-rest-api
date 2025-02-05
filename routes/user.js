@@ -152,6 +152,41 @@ userRouter.get('/google/callback',
  *         description: Unauthorized - authentication failed
  */
 
+// Facebook Authentication
+userRouter.get('/facebook', passport.authenticate('facebook', { scope: ['public_profile'] }));
+
+/**
+ * @swagger
+ * /api/user/facebook:
+ *   get:
+ *     summary: Initiates Facebook authentication
+ *     tags: [user]
+ *     responses:
+ *       302:
+ *         description: Redirects to Facebook for authentication
+ */
+
+// Facebook Callback
+userRouter.get('/facebook/callback', 
+  passport.authenticate('facebook', { failureRedirect: '/login' }),
+  (req, res) => {
+    res.redirect('http://localhost:3000/user');
+  }
+);
+
+/**
+ * @swagger
+ * /api/user/facebook/callback:
+ *   get:
+ *     summary: Handles Facebook authentication callback
+ *     tags: [user]
+ *     responses:
+ *       302:
+ *         description: Redirects to home page on successful authentication
+ *       401:
+ *         description: Unauthorized - authentication failed
+ */
+
 // Verify Session
 userRouter.route('/verify-session')
 .get((req, res) => {
