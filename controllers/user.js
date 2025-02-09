@@ -85,9 +85,9 @@ const getOneByFacebookId = async (profile, done) => {
       // User does not exist, create a new user
       const profileData = {
         id: profile.id,
-        email: profile.id, // email: profile.emails[0].value,
-        firstName: profile.name.givenName, // profile.displayName.split(' ')[0]
-        lastName:  profile.name.familyName // profile.displayName.split(' ').pop()
+        email: profile.emails[0].value,
+        firstName: profile.name.givenName,
+        lastName:  profile.name.familyName
       };
       const newUser = await pool.query(`
         INSERT INTO users (facebook, email, first_name, last_name)
