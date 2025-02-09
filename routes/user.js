@@ -153,7 +153,7 @@ userRouter.get('/google/callback',
  */
 
 // Facebook Authentication
-userRouter.get('/facebook', passport.authenticate('facebook', { scope: ['public_profile'] }));
+userRouter.get('/facebook', passport.authenticate('facebook', { scope: ['public_profile', 'email'] }));
 
 /**
  * @swagger
