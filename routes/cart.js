@@ -10,7 +10,7 @@ cartRouter.route('/')
 cartRouter.route('/:cartId')
 .get( cartCtl.getById )
 .post( cartCtl.addToCart )
-// .put(  )
+.put( cartCtl.updateById )
 .delete( cartCtl.deleteById );
 
 cartRouter.route('/:cartId/checkout')
@@ -153,6 +153,42 @@ module.exports = cartRouter;
  *     responses:
  *       204:
  *         description: No content - cart deleted
+ *       500:
+ *         description: Server error
+ *   put:
+ *     summary: a PUT request to this endpoint updates the userId associated with the provided shopping cart
+ *     tags: [cart]
+ *     parameters:
+ *       - name: cartId
+ *         in: path
+ *         description: ID of cart to update
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           format: int64
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: integer
+ *                 format: int64
+ *                 description: The new userId to associate with the cart
+ *                 example: 1
+ *     responses:
+ *       200:
+ *         description: Cart was successfully updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/cart'
+ *       400:
+ *         description: Bad request
+ *       404:
+ *         description: Cart not found
  *       500:
  *         description: Server error
  */

@@ -8,7 +8,8 @@ const cartProdutcsInfo = async (cartId) => {
             FROM cart_items
             INNER JOIN products
             ON products.id = cart_items.product_id
-            WHERE cart_id = $1;`,
+            WHERE cart_id = $1
+            ORDER BY cart_items.id;`,
             [cartId]
         );
         cartItemsInfo.rows.forEach(item => item.subtotal = item.qty * item.price);
@@ -65,12 +66,19 @@ const getCart = async (cartId) => {
 const addToCart = async (req, res) => {
     const { productId, qty } = req.body;
     let { cartId } = req.params;
-    const userId = req.user.id;
+    const userId = req.user ? req.user.id : null;
     try {
         let cart;
         let cartResult;
 
-        if (userId) {
+        if (cartId) {
+            // If a cartId is provided, select it
+            cartResult = await pool.query(
+                'SELECT id, user_id AS "userId", created, modified FROM carts WHERE id = $1',
+                [cartId]
+            );
+            cart = cartResult.rows[0];
+        } else if (userId) {
             // Try to find a cart for current user
             cartResult = await pool.query(
                 'SELECT * FROM carts WHERE user_id = $1',
@@ -86,13 +94,6 @@ const addToCart = async (req, res) => {
             } else {
                 cart = cartResult.rows[0];
             }
-        } else if (cartId) {
-            // If a cartId is provided, select it
-            cartResult = await pool.query(
-                'SELECT id, user_id AS "userId", created, modified FROM carts WHERE id = $1',
-                [cartId]
-            );
-            cart = cartResult.rows[0];
         } else {
             // If user is not logged and no cartId is provided, create a new empty cart without user
             cartResult = await pool.query(
@@ -107,7 +108,7 @@ const addToCart = async (req, res) => {
             [cart.id, productId]
         );
 
-        // If product is found, update it, and if not, add to cart
+        // If that product is already in the cart, update it, and if not, add to cart
         let cartItems;
         if (cartItemResult.rows.length === 0) {
             cartItems = await pool.query(`
@@ -155,11 +156,11 @@ const getByUserId = async (req, res) => {
     try {
         const userId = req.user.id;
         let cartResult = await pool.query(
-            'SELECT * FROM carts WHERE user_id = $1',
+            'SELECT id, user_id AS "userId", created, modified FROM carts WHERE user_id = $1',
             [userId]
         );
         if (cartResult.rows.length === 0) {
-            return res.status(404).json({ message: 'Cart not found for this user' });
+            return null; // res.status(404).json({ message: 'Cart not found for this user' });
         }
         const cart = cartResult.rows[0];
         cartResult = await getCartItems(cart.id);
@@ -191,7 +192,7 @@ const deleteByUserId = async (req, res) => {
     }
   };
   
-  const getById = async (req, res) => {
+const getById = async (req, res) => {
     const { cartId } = req.params;
     try {
         const cart = await getCart(cartId);
@@ -205,7 +206,28 @@ const deleteByUserId = async (req, res) => {
     }
 }
 
-const deleteById = async (req, res) => {
+const updateById = async (req, res) => {
+    if (!req.user) {
+        return res.status(404).json({ message: 'Please log in first!' });
+    }
+    const { cartId } = req.params;
+    const userId = req.user.id;
+    try {
+      const result = await pool.query(
+        'UPDATE carts SET user_id = $1, modified = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, user_id AS "userId", created, modified',
+        [userId, cartId]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ message: 'Cart not found' });
+      }
+      const updatedCart = await getCart(cartId) // result.rows[0];
+      res.status(200).json(updatedCart);
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  };
+  
+  const deleteById = async (req, res) => {
     const { cartId } = req.params;
     try {
       await pool.query(
@@ -219,10 +241,11 @@ const deleteById = async (req, res) => {
   }
 
 module.exports = {
-    getCart,
-    addToCart,
-    getByUserId,
-    deleteByUserId,
-    getById,
-    deleteById
-}
+  getCart,
+  addToCart,
+  getByUserId,
+  deleteByUserId,
+  getById,
+  updateById,
+  deleteById
+};
