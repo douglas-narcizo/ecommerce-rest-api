@@ -144,10 +144,10 @@ module.exports = orderRouter;
  *           description: Auto-generated id of the order
  *           example: "01234567-89ab-cdef-0123-456789abcedf"
  *         userId:
- *           type: integer
- *           format: int64
+ *           type: string
+ *           format: uuid
  *           description: The id of the user who owns the order
- *           example: 1
+ *           example: "01234567-89ab-cdef-0123-456789abcedf"
  *         total:
  *           type: number
  *           description: The sum of the prices for all items in the order

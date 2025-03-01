@@ -1,6 +1,6 @@
 {
   "name": "ecommerce-rest-api",
-  "version": "1.0.5",
+  "version": "1.0.7",
   "description": "RESTful API for e-commerce applications",
   "main": "index.js",
   "scripts": {

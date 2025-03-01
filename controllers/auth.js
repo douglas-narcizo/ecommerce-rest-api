@@ -70,7 +70,7 @@ module.exports = (passport) => {
 
   passport.deserializeUser(async (id, done) => {
     try {
-      const userResult = await pool.query('SELECT id, email, first_name AS "firstName", last_name AS "lastName" FROM users WHERE id = $1', [id]);
+      const userResult = await pool.query('SELECT id, email, first_name AS "firstName", last_name AS "lastName", picture FROM users WHERE id = $1', [id]);
       if (userResult.rows.length === 0) {
         return done(new Error('User not found'));
       }

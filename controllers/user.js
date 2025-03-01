@@ -9,7 +9,7 @@ const register = async (req, res) => {
     const newUser = await pool.query(`
       INSERT INTO users (email, password, first_name, last_name)
       VALUES ($1, $2, $3, $4)
-      RETURNING id, email, first_name AS "firstName", last_name AS "lastName"`,
+      RETURNING id, email, first_name AS "firstName", last_name AS "lastName", picture`,
       [email, hash, firstName, lastName]
     );
     res.status(201).json(newUser.rows[0]);
@@ -23,7 +23,7 @@ const getOneById = async (req, res) => {
   if (req.user && req.user.id == userId) {
     try {
       const result = await pool.query(`
-        SELECT id, email, first_name AS "firstName", last_name AS "lastName"
+        SELECT id, email, first_name AS "firstName", last_name AS "lastName", picture
         FROM users
         WHERE id = $1`,
         [userId]);
@@ -43,7 +43,7 @@ const getOneById = async (req, res) => {
 const getOneByGoogleId = async (profile, done) => {
   try {
     const result = await pool.query(`
-      SELECT id, email, first_name AS "firstName", last_name AS "lastName"
+      SELECT id, email, first_name AS "firstName", last_name AS "lastName", picture
       FROM users
       WHERE google ->> 'id' = $1`,
       [profile.id]);
@@ -58,10 +58,10 @@ const getOneByGoogleId = async (profile, done) => {
         picture: profile.photos[0].value,
       };
       const newUser = await pool.query(`
-        INSERT INTO users (google, email, first_name, last_name)
-        VALUES ($1, $2, $3, $4)
-        RETURNING id, email, first_name AS "firstName", last_name AS "lastName"`,
-        [profileData, profileData.email, profileData.firstName, profileData.lastName]);
+        INSERT INTO users (google, email, first_name, last_name, picture)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id, email, first_name AS "firstName", last_name AS "lastName", picture`,
+        [profileData, profileData.email, profileData.firstName, profileData.lastName, profileData.picture]);
 
       return done(null, newUser.rows[0]);
     } else {
@@ -76,7 +76,7 @@ const getOneByGoogleId = async (profile, done) => {
 const getOneByFacebookId = async (profile, done) => {
   try {
     const result = await pool.query(`
-      SELECT id, email, first_name AS "firstName", last_name AS "lastName"
+      SELECT id, email, first_name AS "firstName", last_name AS "lastName", picture
       FROM users
       WHERE facebook ->> 'id' = $1`,
       [profile.id]);
@@ -87,13 +87,14 @@ const getOneByFacebookId = async (profile, done) => {
         id: profile.id,
         email: profile.emails[0].value,
         firstName: profile.name.givenName,
-        lastName:  profile.name.familyName
+        lastName:  profile.name.familyName,
+        picture: profile.photos[0].value,
       };
       const newUser = await pool.query(`
-        INSERT INTO users (facebook, email, first_name, last_name)
-        VALUES ($1, $2, $3, $4)
-        RETURNING id, email, first_name AS "firstName", last_name AS "lastName"`,
-        [profileData, profileData.email, profileData.firstName, profileData.lastName]);
+        INSERT INTO users (facebook, email, first_name, last_name, picture)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id, email, first_name AS "firstName", last_name AS "lastName", picture`,
+        [profileData, profileData.email, profileData.firstName, profileData.lastName, profileData.picture]);
 
       return done(null, newUser.rows[0]);
     } else {
@@ -137,7 +138,7 @@ const updateById = async (req, res) => {
       UPDATE users
       SET ${setClause}
       WHERE id = $1
-      RETURNING id, email, first_name AS "firstName", last_name AS "lastName"`,
+      RETURNING id, email, first_name AS "firstName", last_name AS "lastName", picture`,
       [userId, ...values]);
 
     if (result.rows.length === 0) {
