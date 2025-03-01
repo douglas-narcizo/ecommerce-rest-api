@@ -22,7 +22,7 @@ module.exports = cartRouter;
  * @swagger
  * /api/cart:
  *   post:
- *     summary: this route is intended to be used when you DON'T have a CART ID, when the first product ia added.
+ *     summary: this route is intended to be used when you DON'T have a CART ID, when the first product is added.
  *     tags: [cart]
  *     requestBody:
  *       required: true
@@ -108,8 +108,8 @@ module.exports = cartRouter;
  *         description: ID of cart to update
  *         required: true
  *         schema:
- *           type: integer
- *           format: int64
+ *           type: string
+ *           format: uuid
  *     responses:
  *       201:
  *         description: Product was successfully added to / updated in the cart
@@ -128,8 +128,8 @@ module.exports = cartRouter;
  *         description: the ID of the cart
  *         required: true
  *         schema:
- *           type: integer
- *           format: int64
+ *           type: string
+ *           format: uuid
  *     responses:
  *       200:
  *         description: OK - the cart object is returned
@@ -148,8 +148,8 @@ module.exports = cartRouter;
  *         description: ID of cart to delete
  *         required: true
  *         schema:
- *           type: integer
- *           format: int64
+ *           type: string
+ *           format: uuid
  *     responses:
  *       204:
  *         description: No content - cart deleted
@@ -164,8 +164,8 @@ module.exports = cartRouter;
  *         description: ID of cart to update
  *         required: true
  *         schema:
- *           type: integer
- *           format: int64
+ *           type: string
+ *           format: uuid
  *     requestBody:
  *       required: true
  *       content:
@@ -174,10 +174,10 @@ module.exports = cartRouter;
  *             type: object
  *             properties:
  *               userId:
- *                 type: integer
- *                 format: int64
+ *                 type: string
+ *                 format: uuid
  *                 description: The new userId to associate with the cart
- *                 example: 1
+ *                 example: "01234567-89ab-cdef-0123-456789abcedf"
  *     responses:
  *       200:
  *         description: Cart was successfully updated
@@ -205,8 +205,8 @@ module.exports = cartRouter;
  *         description: ID of the cart to checkout
  *         required: true
  *         schema:
- *           type: integer
- *           format: int64
+ *           type: string
+ *           format: uuid
  *     requestBody:
  *       required: true
  *       content:
@@ -215,10 +215,10 @@ module.exports = cartRouter;
  *             type: object
  *             properties:
  *               user:
- *                 type: integer
- *                 format: int64
+ *                 type: string
+ *                 format: uuid
  *                 description: the User ID must be provided by the user session - the user must be signed in
- *                 example: 1
+ *                 example: "01234567-89ab-cdef-0123-456789abcedf"
  *     responses:
  *       201:
  *         description: An order was created from the current cart
@@ -228,7 +228,6 @@ module.exports = cartRouter;
  *               $ref: '#/components/schemas/cart'
  *       400:
  *         description: Bad request
-
  */
 
 /**
@@ -242,15 +241,15 @@ module.exports = cartRouter;
  *         - items
  *       properties:
  *         id:
- *           type: integer
- *           format: int64
+ *           type: string
+ *           format: uuid
  *           description: Auto-generated id of the cart
- *           example: 1
+ *           example: "01234567-89ab-cdef-0123-456789abcedf"
  *         userId:
- *           type: integer
- *           format: int64
+ *           type: string
+ *           format: uuid
  *           description: The id of the user who owns the cart
- *           example: 1
+ *           example: "01234567-89ab-cdef-0123-456789abcedf"
  *         created:
  *           type: string
  *           description: The timestamp when the cart was created
@@ -279,15 +278,15 @@ module.exports = cartRouter;
  *           description: The item's ID
  *           example: 1
  *         cartId:
- *           type: integer
- *           format: int64
+ *           type: string
+ *           format: uuid
  *           description: The ID of the cart
- *           example: 1
+ *           example: "01234567-89ab-cdef-0123-456789abcedf"
  *         productId:
- *           type: integer
- *           format: int64
+ *           type: string
+ *           format: uuid
  *           description: The id of the product
- *           example: 1
+ *           example: "01234567-89ab-cdef-0123-456789abcedf"
  *         qty:
  *           type: integer
  *           format: int32

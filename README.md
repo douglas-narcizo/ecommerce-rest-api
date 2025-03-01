@@ -10,7 +10,7 @@ This API part of a Portfolio Project on Codecademy's **Full Stack Engineer** car
 Thanks for visiting! Comments or suggestions are more than welcome!
 
 ---
-![Static Badge](https://img.shields.io/badge/Version-1.0.5-blue?style=plastic)
+![Static Badge](https://img.shields.io/badge/Version-1.0.7-blue?style=plastic)
 ![Static Badge](https://img.shields.io/badge/OpenAPI-v._3.0-green?style=plastic)
 
 The API was developed according to OpenAPI directives, and once running, its documentation can be accessed on the following endpoit:
@@ -19,7 +19,7 @@ The API was developed according to OpenAPI directives, and once running, its doc
 
 ## ENDPOINTS
 
-PRODUCTS
+### PRODUCTS
 - `GET` /api/products
 - `GET` /api/products?category=categoryId
 - `GET` /api/products/:productId
@@ -27,28 +27,33 @@ PRODUCTS
 - `PUT` /api/products/:productId
 - `DELETE` /api/products/:productId
 
-USERS
+### USERS
 - `POST` /api/user/register
 - `POST` /api/user/login
 - `POST` /api/user/logout
 - `GET` /api/user
-- `GET` /api/user/:userId
-- `PUT` /api/user/:userId
-- `DELETE` /api/user/:userId
+- `GET` /api/user/verify-session
+- `GET` /api/user/google
+- `GET` /api/user/google/callback
+- `GET` /api/user/facebook
+- `GET` /api/user/facebook/callback
+- `PUT` /api/user
+- `DELETE` /api/user
 
-CHECKOUT
-- `POST` /cart/:cartId/checkout
+### CHECKOUT
+- `POST` /api/cart/:cartId/checkout
 
-CART
-- `GET` /cart
-- `POST` /cart
-- `POST` /cart/:cartId
-- `GET` /cart/:cartId
-- `DELETE` /cart/:cartId
+### CART
+- `GET` /api/cart
+- `POST` /api/cart
+- `POST` /api/cart/:cartId
+- `GET` /api/cart/:cartId
+- `PUT` /api/cart/:cartId
+- `DELETE` /api/cart/:cartId
 
-ORDERS
-- `GET` /orders
-- `POST` /orders
-- `GET` /orders/:orderId
-- `PUT` /orders/:orderId
-- `DELETE` /orders/:orderId
+### ORDERS
+- `GET` /api/order
+- `POST` /api/order/create-payment-intent
+- `GET` /api/order/:orderId
+- `PUT` /api/order/:orderId
+- `DELETE` /api/order/:orderId
