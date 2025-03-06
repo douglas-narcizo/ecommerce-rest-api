@@ -19,7 +19,6 @@ const createTables = async () => {
       google          JSON,
       facebook        JSON,
       picture         VARCHAR(250),
-      is_admin        BOOL            DEFAULT FALSE
     );
   `
 

@@ -2,7 +2,6 @@ const pool = require('../db');
 
 const create = async (req, res) => {
   const { name, price, description, category, stock, preview } = req.body;
-  console.log(req.body);
   try {
     const result = await pool.query(`
       INSERT INTO products (name, price, description, category, stock, preview)
